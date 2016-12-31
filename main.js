@@ -48,6 +48,7 @@ var mainState = {
 		// Create an empty group
 		this.pipes = game.add.group(); 
 		this.addRowOfPipes();
+		this.deleted_gamers = game.add.group();
 		this.back_gamers = game.add.group();
 		this.gamers = game.add.group(); 
 		this.gamers.add(this.b2);
@@ -135,7 +136,7 @@ var mainState = {
 					// rest =1;
 					
 					if(rest < 0 || rest > 3 ){ gamer.destroy();}
-					if(rest == 2){ gamer.alpha = 0.2;this.setToScale(gamer, 1.5,1.5);gamer.body.velocity.x = -50; this.back_gamers.add(gamer);}
+					if(rest == 2){ gamer.alpha = 0.1;this.setToScale(gamer, 1.5,1.5);gamer.body.velocity.x = -50; this.back_gamers.add(gamer);}
 					if(rest ==1){ gamer.alpha = 0.4;this.setToScale(gamer, 1.2,1.2);gamer.body.velocity.x = 50;  this.back_gamers.add(gamer);}
 					if( rest ==0 ) { console.log(gamer.x);}
 					//if(rest < 0){	gamer.destroy();}
@@ -168,9 +169,7 @@ var mainState = {
 		},this);
 		
 		if(collision){
-				//mandamos a todos los pajaros que no necesitamos al layer back_gamers
-				this.updateVision();
-				
+		
 				//comprobamos que hayan pajaros en back_gamers que los pueda reusar
 				console.log("##########");
 				this.back_gamers.forEach(function(gamer){
@@ -186,8 +185,14 @@ var mainState = {
 												  this.gamers.add(gamer); 
 								}
 							
-							//if(rest < -1 ){	gamer.destroy();}
+							if(rest < -1 ){	this.deleted_gamers.add(gamer);}
 				},this);
+				
+						//mandamos a todos los pajaros que no necesitamos al layer back_gamers
+				this.updateVision();
+				
+				this.deleted_gamers.destroy();
+				
 		}
 		
 	},
