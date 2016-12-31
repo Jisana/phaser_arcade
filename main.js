@@ -24,7 +24,7 @@ var mainState = {
 
 		// Set the physics system
 		game.physics.startSystem(Phaser.Physics.ARCADE);
-
+		
 		// Display the bird at the position x=100 and y=245
 		this.bird = game.add.sprite(100, 245, 'bird');
 		this.bird.zIndex = 1;
@@ -54,7 +54,7 @@ var mainState = {
 		//this.timer = game.time.events.loop(1500, , this); 
 		 game.camera.follow(this.bird);
 		 
-		 this.world_scale_x=1;
+		this.world_scale_x=1;
 		 this.scale_x=0.005;
 		 this.world_scale_zoom = this.scale_x;
 		 this.one_world_scale_zoom = 1;
@@ -81,125 +81,123 @@ var mainState = {
 		if(this.arrowLeftKey.isDown) this.moveX("L");   
 		if(this.arrowRightKey.isDown) this.moveX("R"); 
 		
-		
-		/*if(game.input.keyboard.isDown(Phaser.Keyboard.Q)){
-				this.old_height= this.old_h;
-				this.old_width= this.old_w;
-				console.log("OLD");
-				console.log(this.old_height);
-				console.log(this.old_width);
-				
-				this.world_scale_x = this.world_scale_x-this.scale_x;
-				this.world_scale_zoom += this.scale_x;
-				this.one_world_scale_zoom += this.scale_x;
-				//game.world.scale.setTo(this.world_scale_x);
-				console.log(this.world_scale_x);
-				console.log(this.world_scale_zoom);
-				console.log(this.one_world_scale_zoom);
-				
-				this.new_heigth = game.height*this.world_scale_x;
-				this.new_width = game.width*this.world_scale_x;
-				
-				console.log("NEW");
-				console.log(this.new_heigth);
-				console.log(this.new_width);
-				
-				
-				this.rest_heigth = this.old_height-this.new_heigth;
-				this.rest_width = this.old_width-this.new_width;
-				
-				console.log("REST");
-				console.log(this.rest_heigth);
-				console.log(this.rest_width);
-			
-				/*this.pipes.scale.setTo(this.world_scale_x,this.world_scale_x);
-				this.gamers.scale.setTo(this.world_scale_x,this.world_scale_x);
-				this.bird.scale.setTo(this.world_scale_x,this.world_scale_x);
-			
-				this.pipes.forEach(function(pi){
-				
-							this.setToScale(pi);
-				
-				//	pi.y += this.old_height*this.world_scale_zoom;
-					console.log(pi.y);
-				//	pi.x += this.rest_width;
-				},this);
-				this.gamers.forEach(function(g){
-					this.setToScale(g);
-					console.log(g.y);
-				},this);
-				this.bird.y +=this.old_height*this.world_scale_zoom;
-			
-			
-			
-		}*/
+
 		
 		
     },
 	
-	setToScale:function(o){
-		o.height=o.height*this.world_scale_x;
-		o.width=o.width*this.world_scale_x;
-		o.x-= o.x*this.world_scale_zoom;
+	setToScale:function(o,zX,zY){
+		var old_height = o.height;
+		var new_heigth = old_height*zY;
+		var rest_heigth = new_heigth - old_height;
+		/*console.log("##");
+		console.log(old_height);
+		console.log(new_heigth);
+		console.log(rest_heigth);
+		console.log("--");*/
+		o.scale.setTo(zX,zY); 
+		o.y -= rest_heigth; 
+		//o.x-= o.x*this.world_scale_zoom;
+	},
+	
+	backToScale:function(o,zX,zY){
+		var actual_scale = o.scale.y;
+		var new_scale = 1;
+		var rest_scale = o.scale.y - new_scale;
+		var old_height = "";
+		var new_heigth = "";
+		var rest_heigth = "";
+		//console.log("B: "+rest_scale);
+			//si la resta es positiva significa que estamos trabajando con objetos con scale >1
+			if(rest_scale > 0){
+					o.scale.setTo(1,1);
+					new_heigth = o.height*rest_scale;
+					o.y += new_heigth;
+					o.alpha=1;
+					var hole = Math.floor(Math.random() * 450) + 1;
+					o.x = hole;
+					o.body.velocity.x = 0;
+			}
+		
 	},
 	
 	updateVision:function(){
 				//console.log(this.bird.z);
 				//TODO: ordenar por orden la visualacion, los que rest > 0  deben ir al fondo. 
-			this.one_world_scale_zoom += this.scale_x;
+			
 			this.bird.moveUp();
 			this.gamers.forEach(function(gamer){
 				var rest = gamer.zIndex-this.bird.zIndex;
-				//console.log(rest);
-					if(rest >3 ){ gamer.destroy();  }
-					if(rest ==2 ){ console.log("a2"); gamer.body.alpha = 0.2;gamer.scale.setTo(1.5,1.5);gamer.body.velocity.x = -200; this.back_gamers.add(gamer);}
-					if( rest ==1 ){ console.log("a1");gamer.body.alpha = 0.4;gamer.scale.setTo(1.2,1.2);gamer.body.velocity.x = 200; this.back_gamers.add(gamer);}
-					if( rest ==0 ) {console.log(gamer); }
-					if(rest < 0){
-						gamer.destroy();}
+					//console.log(rest);
+					//Ejemplo:  
+					// this.bird.zIndex = 10;
+					// this.gamer.zIndex = 11;
+					// rest =1;
+					
+					if(rest < 0 || rest > 3 ){ gamer.destroy();}
+					if(rest == 2){ gamer.alpha = 0.2;this.setToScale(gamer, 1.5,1.5);gamer.body.velocity.x = -50; this.back_gamers.add(gamer);}
+					if(rest ==1){ gamer.alpha = 0.4;this.setToScale(gamer, 1.2,1.2);gamer.body.velocity.x = 50;  this.back_gamers.add(gamer);}
+					if( rest ==0 ) { console.log(gamer.x);}
+					//if(rest < 0){	gamer.destroy();}
 					
 			},this);
-		this.back_gamers.forEach(function(gamer){
-					var rest = gamer.zIndex-this.bird.zIndex;
-					
-					if(rest ==2 ){ console.log("a2"); gamer.alpha = 0.2;gamer.scale.setTo(1.5,1.5);this.back_gamers.add(gamer);gamer.body.velocity.x = -200; }
-					if( rest ==1 ){ console.log("a1");gamer.alpha = 0.4;gamer.scale.setTo(1.2,1.2);this.back_gamers.add(gamer);gamer.body.velocity.x = 200; }
-					if( rest ==0 ) {gamer.scale.setTo(1,1);gamer.body.velocity.x = 0; gamer.alpha = 1;this.gamers.add(gamer); }
-					if(rest < 0 || rest > 3){	gamer.destroy();}
-					
-					
-		},this);
+
 	},
 	
+	
+	
 	checkGamersEat:function(){
+		var collision = false;
+		//comprobamos con quien hemos chocado y lo borramos e insertamos 3 nuevos gamers
 		this.gamers.forEach(function(gamer){
 			if(game.physics.arcade.overlap(this.bird, gamer)){ 
-					console.log(this.bird.zIndex);
-					console.log(gamer.zIndex);
+				//	console.log(this.bird.zIndex);
+				//	console.log(gamer.zIndex);
 					if(this.bird.zIndex==gamer.zIndex) {
+							collision = true;
 							gamer.destroy(); 
 							this.getBigger(); 
 							this.addOneGamer(this.bird.zIndex+2);
 							this.addOneGamer(this.bird.zIndex+1);
 							this.addOneGamer(this.bird.zIndex);
 							//this.addOneGamer(this.bird.zIndex+1);
-							this.updateVision();
-					}
+
+						
+				}
 			}
 		},this);
+		
+		if(collision){
+				//mandamos a todos los pajaros que no necesitamos al layer back_gamers
+				this.updateVision();
+				
+				//comprobamos que hayan pajaros en back_gamers que los pueda reusar
+				console.log("##########");
+				this.back_gamers.forEach(function(gamer){
+							var rest = gamer.zIndex-this.bird.zIndex;
+							console.log(rest);
+							if(rest ==2 ){ gamer.alpha = 0.2;
+												  this.setToScale(gamer, 1.5,1.5);
+												  gamer.body.velocity.x = 50; }
+							if(rest ==1 ){ gamer.alpha = 0.4;
+												this.setToScale(gamer, 1.2,1.2);
+												  gamer.body.velocity.x = -50; }
+							if(rest ==0 ) {this.backToScale(gamer,1,1);
+												  this.gamers.add(gamer); 
+								}
+							
+							//if(rest < -1 ){	gamer.destroy();}
+				},this);
+		}
+		
 	},
 
 	getBigger:function(){
-		console.log(this.bird.scale.x);
-		//this.bird.scale.setTo(this.one_world_scale_zoom, this.one_world_scale_zoom);
-		this.bird.zIndex +=1;
-	    //console.log(this.bird.z);
 		if(this.bird.zIndex > 100) exit();
-			//game.add.tween(sprite.scale).to( { x: 3, y: 3 }, 2000, Phaser.Easing.Linear.None, true, 0, 1000, true);
-		if( (this.game.height - this.bird.body.height) < 250) {
-			//redimensionar todo
-			
-		}
+		this.bird.zIndex +=1;
+	    
+		
+		
 	},
 	
 	moveX:function(direction){
@@ -212,6 +210,7 @@ var mainState = {
 	  this.pipes.forEach(function(p){
 			if(game.physics.arcade.overlap(this.bird, p)){ 
 				this.bird.body.y = p.y-p.height;
+				this.bird.body.velocity.y = 1;
 			}
 	},this);
 		
@@ -234,9 +233,9 @@ var mainState = {
 		
 	},
 	addOneGamer:function( zInd = 1){
-		var hole = Math.floor(Math.random() * 200) + 1;
+		var hole = Math.floor(Math.random() * 450) + 1;
 		this.g = game.add.sprite(50+hole, 350, 'bird');
-		this.setToScale(this.g);
+		
 			//console.log("Entrada Index:" + zInd);
 			// Add the pipe to our previously created group
 		
@@ -251,10 +250,10 @@ var mainState = {
 	addOnePipe: function(x, y) {
 			// Create a pipe at the position x and y
 			var pipe = game.add.sprite(x, y, 'pipe');
-
+		//pipe.scale.x=12;
 			// Add the pipe to our previously created group
 			this.pipes.add(pipe);
-
+			
 			// Enable physics on the pipe 
 			game.physics.arcade.enable(pipe);
 
