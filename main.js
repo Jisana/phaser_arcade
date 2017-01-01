@@ -20,7 +20,7 @@ var mainState = {
 */
     //  Then we tell Phaser that we want it to scale up to whatever the browser can handle, but to do it proportionally
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-   // game.world.setBounds(0, 0, 1920, 1200);
+   game.world.setBounds(0, 0, 1920, 450);
 
 		// Set the physics system
 		game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -55,6 +55,7 @@ var mainState = {
 		//this.timer = game.time.events.loop(1500, , this); 
 		 game.camera.follow(this.bird);
 		 
+		 
 		this.world_scale_x=1;
 		 this.scale_x=0.005;
 		 this.world_scale_zoom = this.scale_x;
@@ -67,6 +68,8 @@ var mainState = {
 		this.new_width = game.width;
 		this.rest_heigth = 0;
 		this.rest_width = 0;
+		
+		
     },
 
     update: function() {
@@ -81,45 +84,50 @@ var mainState = {
 		this.spaceKey.onDown.add(this.jump, this);     
 		if(this.arrowLeftKey.isDown) this.moveX("L");   
 		if(this.arrowRightKey.isDown) this.moveX("R"); 
-		
+		this.setToFloor();
 
 		
 		
     },
 	
-	setToScale:function(o,zX,zY){
-		var old_height = o.height;
-		var new_heigth = old_height*zY;
-		var rest_heigth = new_heigth - old_height;
-		/*console.log("##");
-		console.log(old_height);
-		console.log(new_heigth);
-		console.log(rest_heigth);
-		console.log("--");*/
-		o.scale.setTo(zX,zY); 
-		o.y -= rest_heigth; 
-		//o.x-= o.x*this.world_scale_zoom;
+	//comprobamos si el scale que nos pasan es mayor o menor que el actual
+	isNewScaleBigger:function(o,sXY){
+		if(o.scale.x < sXY) return true;
+		else return false;
 	},
 	
-	backToScale:function(o,zX,zY){
-		var actual_scale = o.scale.y;
-		var new_scale = 1;
-		var rest_scale = o.scale.y - new_scale;
-		var old_height = "";
-		var new_heigth = "";
-		var rest_heigth = "";
-		//console.log("B: "+rest_scale);
-			//si la resta es positiva significa que estamos trabajando con objetos con scale >1
-			if(rest_scale > 0){
-					o.scale.setTo(1,1);
-					new_heigth = o.height*rest_scale;
-					o.y += new_heigth;
-					o.alpha=1;
-					var hole = Math.floor(Math.random() * 450) + 1;
-					o.x = hole;
-					o.body.velocity.x = 0;
-			}
+	//ajustamos el objeto al scale que nos facilitan
+	setToScale:function(o,sXY){
+		game.add.tween(o.scale).to( { x: sXY, y: sXY }, 300, Phaser.Easing.Linear.None, true);
+	//	this.setToFloor(o);
+	
 		
+	},
+	
+	setToFloor:function(){
+		
+		this.gamers.forEach(function(gamer){
+			
+			//console.log(gamer.height*gamer.scale.x);
+			var bottom =gamer.bottom;
+				if(gamer.scale != 1){ 
+					if(gamer.scale > 1) bottom = gamer.y+gamer.height*gamer.scale.y;
+				}
+					//console.log(gamer.y+gamer.height);
+				while(bottom != 400 && bottom > 400){gamer.y-=1;bottom += -1;}
+				while(bottom != 400 && bottom < 400){gamer.y+=1;bottom += 1;}
+		},this);
+		this.back_gamers.forEach(function(gamer){
+			//	console.log(gamer.offsetY);
+			//	console.log(gamer.height*gamer.scale.x);
+			var bottom =gamer.bottom;
+				if(gamer.scale != 1){ 
+					if(gamer.scale > 1) bottom = gamer.y+gamer.height*gamer.scale.y;
+				}
+					//console.log(gamer.y+gamer.height);
+				while(bottom != 400 && bottom > 400){gamer.y-=1;bottom += -1;}
+				while(bottom != 400 && bottom < 400){gamer.y+=1;bottom += 1;}
+		},this);
 	},
 	
 	updateVision:function(){
@@ -136,9 +144,9 @@ var mainState = {
 					// rest =1;
 					
 					if(rest < 0 || rest > 3 ){ gamer.destroy();}
-					if(rest == 2){ gamer.alpha = 0.1;this.setToScale(gamer, 1.5,1.5);gamer.body.velocity.x = -50; this.back_gamers.add(gamer);}
-					if(rest ==1){ gamer.alpha = 0.4;this.setToScale(gamer, 1.2,1.2);gamer.body.velocity.x = 50;  this.back_gamers.add(gamer);}
-					if( rest ==0 ) { console.log(gamer.x);}
+					if(rest == 2){ this.back_gamers.add(gamer); gamer.alpha = 0.1;this.setToScale(gamer,4.5);gamer.body.velocity.x = -50; }
+					if(rest ==1){  this.back_gamers.add(gamer); gamer.alpha = 0.4;this.setToScale(gamer, 2.7);gamer.body.velocity.x = 50; }
+					if( rest ==0 ) { }
 					//if(rest < 0){	gamer.destroy();}
 					
 			},this);
@@ -158,30 +166,35 @@ var mainState = {
 							collision = true;
 							gamer.destroy(); 
 							this.getBigger(); 
+						
+							//this.addOneGamer(this.bird.zIndex+1);
 							this.addOneGamer(this.bird.zIndex+2);
 							this.addOneGamer(this.bird.zIndex+1);
 							this.addOneGamer(this.bird.zIndex);
-							//this.addOneGamer(this.bird.zIndex+1);
-
 						
 				}
+			
 			}
 		},this);
 		
 		if(collision){
+			
+				this.updateVision();
 		
 				//comprobamos que hayan pajaros en back_gamers que los pueda reusar
-				console.log("##########");
-				this.back_gamers.forEach(function(gamer){
+			//	console.log("##########");
+			this.back_gamers.forEach(function(gamer){
 							var rest = gamer.zIndex-this.bird.zIndex;
-							console.log(rest);
-							if(rest ==2 ){ gamer.alpha = 0.2;
-												  this.setToScale(gamer, 1.5,1.5);
+				//			console.log(rest);
+							if(rest ==2 ){ gamer.alpha = 0.1;
+												this.setToScale(gamer, 4.5);
 												  gamer.body.velocity.x = 50; }
 							if(rest ==1 ){ gamer.alpha = 0.4;
-												this.setToScale(gamer, 1.2,1.2);
+												this.setToScale(gamer, 2.7);
 												  gamer.body.velocity.x = -50; }
-							if(rest ==0 ) {this.backToScale(gamer,1,1);
+							if(rest ==0 ) {this.setToScale(gamer,1);
+												 gamer.alpha = 1;
+												 gamer.body.velocity.x = 0;
 												  this.gamers.add(gamer); 
 								}
 							
@@ -189,11 +202,13 @@ var mainState = {
 				},this);
 				
 						//mandamos a todos los pajaros que no necesitamos al layer back_gamers
-				this.updateVision();
+			
+			
 				
 				this.deleted_gamers.destroy();
 				
 		}
+	
 		
 	},
 
@@ -277,7 +292,7 @@ var mainState = {
 
 			// Add the 6 pipes 
 			// With one big hole at position 'hole' and 'hole + 1'
-			for (var i = 0; i < 8; i++)
+			for (var i = 0; i < 33; i++)
 			
 					this.addOnePipe(i * 60 + 10,400);   
 		},
